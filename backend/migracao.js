@@ -25,7 +25,7 @@ const stmtFrota = db.prepare(`INSERT OR REPLACE INTO frota (id, modelo, tipo, ve
 
 // Inserindo a Base do NOC (SENAI Vila Leopoldina) no ID 0
 const infraDados = [
-  [0, "Base NOC", "SENAI SP Vila Leopoldina", "0ms", "-23.5315", "-46.7358"],
+  [0, "Base NOC", "SENAI SP Vila Leopoldina", "0ms", "-23.526640233811552", "-46.73597772563871"],
   [1, "Link VSAT (Hub Principal)", "Satélite Star One D2", "580ms", null, null],
   [2, "Link VSAT (BGAN Backup)", "Satélite Inmarsat", "850ms", null, null],
   [3, "Roteamento OSPF", "Core Interno (10.0.0.1)", "2ms", null, null],

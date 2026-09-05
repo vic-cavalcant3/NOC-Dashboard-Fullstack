@@ -95,7 +95,9 @@ export function FrotaCategoria({ frota, statusLinks }) {
                     className="veiculo-container text-decoration-none"
                     style={{ animationPlayState: veiculoAtivo ? 'running' : 'paused' }}
                   >
-                    {veiculo.modelo}
+                    <span style={{ display: 'inline-block', transform: veiculo.tipo === 'Esportivo' ? 'scaleX(-1)' : 'none' }}>
+                      {veiculo.modelo}
+                    </span>
                   </a>
                 </div>
 
