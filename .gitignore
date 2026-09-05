@@ -1,0 +1,4 @@
+node_modules
+dist
+backend/noc_database.sqlite
+.env
