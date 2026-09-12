@@ -1,13 +1,15 @@
 // src/components/BancoDados.jsx
 import React, { useState, useEffect } from 'react';
 
-const API = 'http://localhost:4000/api/frota';
+const API = 'http://localhost:3000/api/frota';
 
 export function BancoDados() {
   const [veiculos, setVeiculos] = useState([]);
   const [logs, setLogs] = useState([]);
   const [erroConexao, setErroConexao] = useState(false);
   const [form, setForm] = useState({ id: '', modelo: '', tipo: 'Carro', vel: '', latitude: '', longitude: '' });
+  const [editando, setEditando] = useState(null); // veículo sendo editado no modal
+  const [editForm, setEditForm] = useState({ novoId: '', modelo: '', tipo: 'Carro', vel: '', latitude: '', longitude: '' });
 
   function addLog(msg, isErr = false) {
     const hora = new Date().toLocaleTimeString();
@@ -29,23 +31,26 @@ export function BancoDados() {
 
   useEffect(() => { carregarLista(); }, []);
 
-  async function editarVeiculo(v) {
-    const vel = prompt(`Nova velocidade para ${v.id}:`, v.vel);
-    if (vel === null) return;
-    const latitude = prompt(`Nova latitude para ${v.id}:`, v.latitude);
-    if (latitude === null) return;
-    const longitude = prompt(`Nova longitude para ${v.id}:`, v.longitude);
-    if (longitude === null) return;
+  function abrirEdicao(v) {
+    setEditando(v);
+    setEditForm({ novoId: v.id, modelo: v.modelo, tipo: v.tipo, vel: v.vel, latitude: v.latitude, longitude: v.longitude });
+  }
 
+  async function salvarEdicao(e) {
+    e.preventDefault();
+    const v = editando;
     try {
       const res = await fetch(`${API}/${v.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vel, latitude, longitude })
+        body: JSON.stringify(editForm)
       });
       const dados = await res.json();
       addLog(`PUT /api/frota/${v.id} → ${res.status} (${dados.mensagem || dados.erro})`, !res.ok);
-      carregarLista();
+      if (res.ok) {
+        setEditando(null);
+        carregarLista();
+      }
     } catch (e) {
       addLog(`Erro no PUT de ${v.id}`, true);
     }
@@ -121,7 +126,7 @@ export function BancoDados() {
                         <td>{v.vel}</td>
                         <td className="font-monospace text-warning">{v.latitude}, {v.longitude}</td>
                         <td>
-                          <button className="btn btn-sm btn-warning fw-bold me-2" onClick={() => editarVeiculo(v)}>PUT</button>
+                          <button className="btn btn-sm btn-warning fw-bold me-2" onClick={() => abrirEdicao(v)}>PUT</button>
                           <button className="btn btn-sm btn-danger fw-bold" onClick={() => deletarVeiculo(v.id)}>DEL</button>
                         </td>
                       </tr>
@@ -173,6 +178,56 @@ export function BancoDados() {
           </div>
         </div>
       </div>
+
+      {editando && (
+        <div
+          onClick={() => setEditando(null)}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.65)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', zIndex: 1050
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className="card glass-card border-info"
+            style={{ width: '360px' }}
+          >
+            <div className="card-body">
+              <h6 className="fw-bold text-info mb-1">Editar {editando.id}</h6>
+              <small className="text-secondary d-block mb-3">{editando.modelo} — {editando.tipo}</small>
+              <form onSubmit={salvarEdicao}>
+                <label className="form-label small text-secondary mb-0">ID</label>
+                <input className="form-control form-control-sm mb-2" value={editForm.novoId}
+                  onChange={e => setEditForm({ ...editForm, novoId: e.target.value })} />
+                <label className="form-label small text-secondary mb-0">Emoji</label>
+                <input className="form-control form-control-sm mb-2" value={editForm.modelo}
+                  onChange={e => setEditForm({ ...editForm, modelo: e.target.value })} />
+                <label className="form-label small text-secondary mb-0">Categoria</label>
+                <select className="form-select form-select-sm mb-2" value={editForm.tipo}
+                  onChange={e => setEditForm({ ...editForm, tipo: e.target.value })}>
+                  {["Ônibus", "Caminhão", "Moto", "Carro", "Caminhonete", "Van", "SUV", "Esportivo", "Trator", "Ambulância"].map(t => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+                <label className="form-label small text-secondary mb-0">Velocidade</label>
+                <input className="form-control form-control-sm mb-2" value={editForm.vel}
+                  onChange={e => setEditForm({ ...editForm, vel: e.target.value })} />
+                <label className="form-label small text-secondary mb-0">Latitude</label>
+                <input className="form-control form-control-sm mb-2" value={editForm.latitude}
+                  onChange={e => setEditForm({ ...editForm, latitude: e.target.value })} />
+                <label className="form-label small text-secondary mb-0">Longitude</label>
+                <input className="form-control form-control-sm mb-3" value={editForm.longitude}
+                  onChange={e => setEditForm({ ...editForm, longitude: e.target.value })} />
+                <div className="d-flex gap-2">
+                  <button type="submit" className="btn btn-warning fw-bold flex-fill">Salvar (PUT)</button>
+                  <button type="button" className="btn btn-outline-light flex-fill" onClick={() => setEditando(null)}>Cancelar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

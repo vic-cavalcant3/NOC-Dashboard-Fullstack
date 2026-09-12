@@ -19,9 +19,10 @@ class FrotaRepository {
   }
 
   async atualizar(id, dados) {
-    const { vel, latitude, longitude } = dados;
-    const query = `UPDATE frota SET vel = ?, latitude = ?, longitude = ?, ultima_atualizacao = CURRENT_TIMESTAMP WHERE id = ?`;
-    const info = db.prepare(query).run(vel, latitude, longitude, id);
+    const { novoId, modelo, tipo, vel, latitude, longitude } = dados;
+    const idFinal = novoId || id;
+    const query = `UPDATE frota SET id = ?, modelo = ?, tipo = ?, vel = ?, latitude = ?, longitude = ?, ultima_atualizacao = CURRENT_TIMESTAMP WHERE id = ?`;
+    const info = db.prepare(query).run(idFinal, modelo, tipo, vel, latitude, longitude, id);
     return info.changes;
   }
 
