@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<title>NOC Command Center - CRUD (Lab 6)</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(-45deg, #09121c, #162635, #1d3342, #000000);
+    background-size: 400% 400%; color: #e0e0e0; min-height: 100vh; padding: 24px;
+  }
+  h1 { color: #0dcaf0; font-weight: 300; margin: 0 0 4px; }
+  h1 span { font-weight: 700; }
+  .subtitle { color: #7a8a99; margin-bottom: 24px; font-size: 0.9rem; }
+  .layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+  .card {
+    background: rgba(18, 24, 31, 0.85); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px;
+  }
+  .card h2 { font-size: 1rem; color: #0dcaf0; margin: 0 0 14px; font-weight: 600; }
+  input, select {
+    width: 100%; margin-bottom: 10px; padding: 9px 10px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.15); background: #10181f; color: #fff; font-size: 0.9rem;
+  }
+  button {
+    cursor: pointer; border: none; border-radius: 6px; padding: 9px 14px;
+    font-weight: 600; font-size: 0.85rem;
+  }
+  .btn-post { background: #198754; color: #fff; width: 100%; padding: 11px; }
+  .btn-refresh { background: transparent; border: 1px solid #0dcaf0; color: #0dcaf0; margin-bottom: 14px; }
+  .btn-put { background: #ffc107; color: #000; margin-right: 6px; }
+  .btn-del { background: #dc3545; color: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; color: #7a8a99; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); position: sticky; top: 0; background: #101820; }
+  td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .table-wrap { max-height: 480px; overflow-y: auto; }
+  .badge { background: rgba(13,202,240,0.15); color: #0dcaf0; padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; }
+  #log {
+    background: #05080c; border-radius: 8px; padding: 10px; font-family: 'Consolas', monospace;
+    font-size: 0.75rem; height: 160px; overflow-y: auto; margin-top: 14px; color: #7dffb0;
+  }
+  #log div { margin-bottom: 3px; }
+  .log-err { color: #ff6b6b !important; }
+  .status { font-size: 0.8rem; color: #7a8a99; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+  <h1>📡 NOC Command Center — <span>CRUD Lab 6</span></h1>
+  <div class="subtitle">Interface de testes para a API REST (banco de 100.000 veículos)</div>
+
+  <div class="layout">
+    <div>
+      <div class="card">
+        <h2>➕ Novo Veículo (POST)</h2>
+        <input id="f-id" placeholder="ID (ex: V-100001)" />
+        <input id="f-modelo" placeholder="Emoji (ex: 🚗)" />
+        <select id="f-tipo">
+          <option>Ônibus</option><option>Caminhão</option><option>Moto</option>
+          <option selected>Carro</option><option>Caminhonete</option><option>Van</option>
+          <option>SUV</option><option>Esportivo</option><option>Trator</option><option>Ambulância</option>
+        </select>
+        <input id="f-vel" placeholder="Velocidade" />
+        <input id="f-lat" placeholder="Latitude" />
+        <input id="f-lng" placeholder="Longitude" />
+        <button class="btn-post" onclick="criarVeiculo()">POST — Criar</button>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>🖥️ Log de Requisições</h2>
+        <div id="log"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📋 Frota <span class="badge" id="count-badge">carregando...</span></h2>
+      <button class="btn-refresh" onclick="carregarLista()">🔄 Atualizar lista</button>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Ícone</th><th>Categoria</th><th>Vel</th><th>GPS</th><th>Ações</th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API = 'http://localhost:3000/api/frota';
+
+function log(msg, isErr) {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  if (isErr) line.className = 'log-err';
+  const hora = new Date().toLocaleTimeString();
+  line.textContent = `[${hora}] ${msg}`;
+  el.prepend(line);
+}
+
+async function carregarLista() {
+  try {
+    const res = await fetch(API);
+    const dados = await res.json();
+    log(`GET /api/frota → ${res.status} OK (${dados.length} lidos)`);
+    document.getElementById('count-badge').textContent = `${dados.length} exibidos (amostra dos 100.000)`;
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = '';
+    dados.forEach(v => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${v.id}</td>
+        <td>${v.modelo}</td>
+        <td>${v.tipo}</td>
+        <td>${v.vel}</td>
+        <td>${v.latitude}, ${v.longitude}</td>
+        <td>
+          <button class="btn-put" onclick="editarVeiculo('${v.id}', '${v.vel}', '${v.latitude}', '${v.longitude}')">PUT</button>
+          <button class="btn-del" onclick="deletarVeiculo('${v.id}')">DEL</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    log(`Falha ao conectar em ${API} — confira se o servidor (npm start) está rodando.`, true);
+  }
+}
+
+async function editarVeiculo(id, velAtual, latAtual, lngAtual) {
+  const vel = prompt(`Nova velocidade para ${id}:`, velAtual);
+  if (vel === null) return;
+  const latitude = prompt(`Nova latitude para ${id}:`, latAtual);
+  if (latitude === null) return;
+  const longitude = prompt(`Nova longitude para ${id}:`, lngAtual);
+  if (longitude === null) return;
+
+  try {
+    const res = await fetch(`${API}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vel, latitude, longitude })
+    });
+    const dados = await res.json();
+    log(`PUT /api/frota/${id} → ${res.status} (${dados.mensagem || dados.erro})`, !res.ok);
+    carregarLista();
+  } catch (e) {
+    log(`Erro no PUT de ${id}`, true);
+  }
+}
+
+async function deletarVeiculo(id) {
+  if (!confirm(`Apagar o veículo ${id}?`)) return;
+  try {
+    const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
+    log(`DELETE /api/frota/${id} → ${res.status}`, !res.ok);
+    carregarLista();
+  } catch (e) {
+    log(`Erro no DELETE de ${id}`, true);
+  }
+}
+
+async function criarVeiculo() {
+  const veiculo = {
+    id: document.getElementById('f-id').value.trim(),
+    modelo: document.getElementById('f-modelo').value.trim(),
+    tipo: document.getElementById('f-tipo').value,
+    vel: document.getElementById('f-vel').value.trim(),
+    latitude: document.getElementById('f-lat').value.trim(),
+    longitude: document.getElementById('f-lng').value.trim(),
+  };
+  if (!veiculo.id || !veiculo.tipo) {
+    alert('ID e Tipo são obrigatórios.');
+    return;
+  }
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(veiculo)
+    });
+    const dados = await res.json();
+    log(`POST /api/frota → ${res.status} (id: ${dados.id || dados.erro})`, !res.ok);
+    if (res.ok) carregarLista();
+  } catch (e) {
+    log('Erro no POST', true);
+  }
+}
+
+carregarLista();
+</script>
+
+</body>
+</html>

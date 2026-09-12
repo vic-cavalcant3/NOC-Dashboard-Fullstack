@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, useNavigate, Link, useLocation } from 're
 import './App.css';
 import { LinksComunicacao } from './components/LinksComunicacao';
 import { FrotaCategoria } from './components/FrotaCategoria';
+import { BancoDados } from './components/BancoDados';
 
 const categoriasVeiculos = ["Ônibus", "Caminhão", "Moto", "Carro", "Caminhonete", "Van", "SUV", "Esportivo", "Trator", "Ambulância"];
 const rotasDisponiveis = ["/", ...categoriasVeiculos.map(c => `/frota/${c}`)];
@@ -34,8 +35,9 @@ function DashboardRouter() {
       });
   }, []);
 
-  // Roteamento Temporizado (troca de tela a cada 5s)
+  // Roteamento Temporizado (troca de tela a cada 5s) — pausa na aba Banco de Dados
   useEffect(() => {
+    if (location.pathname === '/banco-dados') return;
     if (tempoRestante > 0) {
       const timer = setTimeout(() => setTempoRestante(tempoRestante - 1), 1000);
       return () => clearTimeout(timer);
@@ -70,7 +72,7 @@ function DashboardRouter() {
               NOC COMMAND CENTER
             </span>
             <span className="badge bg-transparent border border-info text-info px-3 py-2">
-              AUTO-SWAP: 00:0{tempoRestante}
+              {location.pathname === '/banco-dados' ? 'AUTO-SWAP: PAUSADO' : `AUTO-SWAP: 00:0${tempoRestante}`}
             </span>
           </div>
 
@@ -93,6 +95,9 @@ function DashboardRouter() {
                 </Link>
               );
             })}
+            <Link to="/banco-dados" onClick={() => setTempoRestante(5)} className={`btn btn-sm text-nowrap px-3 py-2 fw-bold ${location.pathname === '/banco-dados' ? 'btn-warning text-dark shadow' : 'btn-outline-warning text-white'}`}>
+              💾 Banco de Dados
+            </Link>
           </div>
         </div>
       </nav>
@@ -101,6 +106,7 @@ function DashboardRouter() {
         <Routes>
           <Route path="/" element={<LinksComunicacao dados={dados.infraestrutura} statusLinks={statusLinks} toggleLink={toggleLink} />} />
           <Route path="/frota/:categoria" element={<FrotaCategoria frota={dados.frota} statusLinks={statusLinks} />} />
+          <Route path="/banco-dados" element={<BancoDados />} />
         </Routes>
       </main>
     </div>
