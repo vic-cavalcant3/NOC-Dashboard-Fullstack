@@ -3,6 +3,9 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const CATEGORIAS = ["Ônibus", "Caminhão", "Moto", "Carro", "Caminhonete", "Van", "SUV", "Esportivo", "Trator", "Ambulância"];
 
+
+
+
 function linkDaCategoria(categoria) {
   if (categoria === "Carro" || categoria === "Caminhonete") return 1;
   if (categoria === "Caminhão") return 2;
