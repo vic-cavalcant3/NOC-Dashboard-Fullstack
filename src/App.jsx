@@ -5,6 +5,7 @@ import './App.css';
 import { LinksComunicacao } from './components/LinksComunicacao';
 import { FrotaCategoria } from './components/FrotaCategoria';
 import { BancoDados } from './components/BancoDados';
+import { MonitoramentoFrota } from './components/MonitoramentoFrota';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 const categoriasVeiculos = ["Ônibus", "Caminhão", "Moto", "Carro", "Caminhonete", "Van", "SUV", "Esportivo", "Trator", "Ambulância"];
@@ -38,7 +39,7 @@ function DashboardRouter() {
 
   // Roteamento Temporizado (troca de tela a cada 5s) — pausa na aba Banco de Dados
   useEffect(() => {
-    if (location.pathname === '/banco-dados') return;
+    if (location.pathname === '/banco-dados' || location.pathname === '/monitoramento') return;
     if (tempoRestante > 0) {
       const timer = setTimeout(() => setTempoRestante(tempoRestante - 1), 1000);
       return () => clearTimeout(timer);
@@ -73,7 +74,7 @@ function DashboardRouter() {
               NOC COMMAND CENTER
             </span>
             <span className="badge bg-transparent border border-info text-info px-3 py-2">
-              {location.pathname === '/banco-dados' ? 'AUTO-SWAP: PAUSADO' : `AUTO-SWAP: 00:0${tempoRestante}`}
+              {(location.pathname === '/banco-dados' || location.pathname === '/monitoramento') ? 'AUTO-SWAP: PAUSADO' : `AUTO-SWAP: 00:0${tempoRestante}`}
             </span>
           </div>
 
@@ -99,6 +100,9 @@ function DashboardRouter() {
             <Link to="/banco-dados" onClick={() => setTempoRestante(5)} className={`btn btn-sm text-nowrap px-3 py-2 fw-bold ${location.pathname === '/banco-dados' ? 'btn-warning text-dark shadow' : 'btn-outline-warning text-white'}`}>
               💾 Banco de Dados
             </Link>
+            <Link to="/monitoramento" onClick={() => setTempoRestante(5)} className={`btn btn-sm text-nowrap px-3 py-2 fw-bold ${location.pathname === '/monitoramento' ? 'btn-info text-dark shadow' : 'btn-outline-info text-white'}`}>
+              🖥️ Monitoramento
+            </Link>
           </div>
         </div>
       </nav>
@@ -109,6 +113,7 @@ function DashboardRouter() {
             <Route path="/" element={<LinksComunicacao dados={dados.infraestrutura} statusLinks={statusLinks} toggleLink={toggleLink} />} />
             <Route path="/frota/:categoria" element={<FrotaCategoria frota={dados.frota} statusLinks={statusLinks} />} />
             <Route path="/banco-dados" element={<BancoDados />} />
+            <Route path="/monitoramento" element={<MonitoramentoFrota infraestrutura={dados.infraestrutura} frota={dados.frota} statusLinks={statusLinks} toggleLink={toggleLink} />} />
           </Routes>
         </ErrorBoundary>
       </main>
