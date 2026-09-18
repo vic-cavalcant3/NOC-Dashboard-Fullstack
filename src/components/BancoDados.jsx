@@ -1,7 +1,7 @@
 // src/components/BancoDados.jsx
 import React, { useState, useEffect } from 'react';
 
-const API = 'http://localhost:3000/api/frota';
+const API = `${import.meta.env.VITE_API_URL_CRUD || 'http://localhost:3000'}/api/frota`;
 
 export function BancoDados() {
   const [veiculos, setVeiculos] = useState([]);

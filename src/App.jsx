@@ -5,6 +5,7 @@ import './App.css';
 import { LinksComunicacao } from './components/LinksComunicacao';
 import { FrotaCategoria } from './components/FrotaCategoria';
 import { BancoDados } from './components/BancoDados';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const categoriasVeiculos = ["Ônibus", "Caminhão", "Moto", "Carro", "Caminhonete", "Van", "SUV", "Esportivo", "Trator", "Ambulância"];
 const rotasDisponiveis = ["/", ...categoriasVeiculos.map(c => `/frota/${c}`)];
@@ -23,7 +24,7 @@ function DashboardRouter() {
 
   // Ciclo de vida para consumir a API REST (SQLite)
   useEffect(() => {
-    fetch('http://localhost:3000/api/dados')
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/dados`)
       .then(response => response.json())
       .then(data => {
         setDados(data);
@@ -103,11 +104,13 @@ function DashboardRouter() {
       </nav>
 
       <main>
-        <Routes>
-          <Route path="/" element={<LinksComunicacao dados={dados.infraestrutura} statusLinks={statusLinks} toggleLink={toggleLink} />} />
-          <Route path="/frota/:categoria" element={<FrotaCategoria frota={dados.frota} statusLinks={statusLinks} />} />
-          <Route path="/banco-dados" element={<BancoDados />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<LinksComunicacao dados={dados.infraestrutura} statusLinks={statusLinks} toggleLink={toggleLink} />} />
+            <Route path="/frota/:categoria" element={<FrotaCategoria frota={dados.frota} statusLinks={statusLinks} />} />
+            <Route path="/banco-dados" element={<BancoDados />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
     </div>
   );
