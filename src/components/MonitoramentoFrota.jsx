@@ -3,9 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const CATEGORIAS = ["Ônibus", "Caminhão", "Moto", "Carro", "Caminhonete", "Van", "SUV", "Esportivo", "Trator", "Ambulância"];
 
-
-
-
 function linkDaCategoria(categoria) {
   if (categoria === "Carro" || categoria === "Caminhonete") return 1;
   if (categoria === "Caminhão") return 2;
@@ -333,12 +330,51 @@ export function MonitoramentoFrota({ infraestrutura, frota, statusLinks, toggleL
       <div className="row mb-4">
         <div className="col-12 col-lg-6 mb-3">
           <div className="card glass-card h-100"><div className="card-body">
-            <div className="small text-secondary mb-2">TENDÊNCIA DE DISPONIBILIDADE (%)</div>
-            <svg viewBox="0 0 300 80" width="100%" height="80">
-              <polyline
-                fill="none" stroke="#0dcaf0" strokeWidth="2"
-                points={historico.map((v, i) => `${(i / Math.max(historico.length - 1, 1)) * 300},${80 - (v / 100) * 70}`).join(' ')}
-              />
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <div className="small text-secondary" style={{ letterSpacing: '1px' }}>TENDÊNCIA DE DISPONIBILIDADE (%)</div>
+              <span className={`fw-bold font-monospace ${percentLinks === 100 ? 'text-success' : 'text-warning'}`}>
+                {percentLinks}%
+              </span>
+            </div>
+            <svg viewBox="0 0 600 140" width="100%" style={{ height: 'auto', display: 'block' }}>
+              <defs>
+                <linearGradient id="gradDisponibilidade" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#0dcaf0" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#0dcaf0" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+
+              {/* Grade + escala do eixo Y */}
+              {[100, 75, 50, 25, 0].map(v => {
+                const y = 118 - (v / 100) * 100;
+                return (
+                  <g key={v}>
+                    <line x1="42" y1={y} x2="590" y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="4 4" />
+                    <text x="34" y={y + 4} textAnchor="end" fill="#6c757d" fontSize="11" fontFamily="monospace">{v}</text>
+                  </g>
+                );
+              })}
+              <line x1="42" y1="18" x2="42" y2="118" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+
+              {/* Série */}
+              {(() => {
+                const serie = historico.length >= 2 ? historico : [percentLinks, percentLinks];
+                const px = i => 42 + (i / (serie.length - 1)) * 548;
+                const py = v => 118 - (v / 100) * 100;
+                const pontos = serie.map((v, i) => `${px(i)},${py(v)}`).join(' ');
+                const cor = percentLinks === 100 ? '#0dcaf0' : '#ffc107';
+                return (
+                  <g>
+                    <polygon points={`42,118 ${pontos} 590,118`} fill="url(#gradDisponibilidade)" />
+                    <polyline points={pontos} fill="none" stroke={cor} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+                    <circle cx={px(serie.length - 1)} cy={py(serie[serie.length - 1])} r="4" fill={cor} />
+                    <circle cx={px(serie.length - 1)} cy={py(serie[serie.length - 1])} r="8" fill={cor} opacity="0.25" />
+                  </g>
+                );
+              })()}
+
+              <text x="42" y="136" fill="#6c757d" fontSize="10" fontFamily="monospace">-24 ciclos</text>
+              <text x="590" y="136" textAnchor="end" fill="#6c757d" fontSize="10" fontFamily="monospace">agora</text>
             </svg>
           </div></div>
         </div>

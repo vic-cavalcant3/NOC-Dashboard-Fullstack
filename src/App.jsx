@@ -23,6 +23,9 @@ function DashboardRouter() {
   const location = useLocation();
   const [tempoRestante, setTempoRestante] = useState(5);
 
+  // Telão do NOC: a rota de Monitoramento roda em modo limpo, sem barra de navegação
+  const modoTelao = location.pathname === '/monitoramento';
+
   // Ciclo de vida para consumir a API REST (SQLite)
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/dados`)
@@ -59,6 +62,7 @@ function DashboardRouter() {
 
   return (
     <div>
+      {!modoTelao && (
       <nav className="navbar navbar-dark bg-black bg-opacity-75 shadow-lg border-bottom border-info sticky-top">
         <div className="container-fluid flex-column align-items-start px-3 py-2">
           <div className="d-flex w-100 justify-content-between align-items-center mb-3">
@@ -106,6 +110,7 @@ function DashboardRouter() {
           </div>
         </div>
       </nav>
+      )}
 
       <main>
         <ErrorBoundary>
