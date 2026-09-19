@@ -358,81 +358,9 @@ export function MonitoramentoFrota({ infraestrutura, frota, statusLinks, toggleL
         })}
       </div>
 
-      {/* Status por categoria de frota — 10 grupos */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="m-0 text-white d-flex align-items-center" style={{ letterSpacing: '1px' }}>
-          <span style={{ display: 'inline-block', width: '4px', height: '22px', background: '#0dcaf0', marginRight: '12px', borderRadius: '2px' }}></span>
-          🚚 STATUS POR CATEGORIA DE FROTA
-        </h5>
-        <span className="text-secondary" style={{ fontSize: '0.7rem', letterSpacing: '2px' }}>10 GRUPOS • 10.000 VEÍCULOS CADA</span>
-      </div>
-
+      {/* Gráficos + Status por Categoria */}
       <div className="row mb-4">
-        {CATEGORIAS.map(cat => {
-          const perfil = PERFIL_CATEGORIA[cat];
-          const idLink = linkDaCategoria(cat);
-          const sinalOk = statusLinks[idLink];
-          const velMedia = Math.max(0, (mediasPorCategoria[cat]?.velMedia || 0) + Math.round(jitter / 2));
-          const energia = Math.min(99, Math.max(5, perfil.energiaBase + jitter));
-          const energiaBaixa = energia < 30;
-
-          return (
-            <div key={cat} className="col-6 col-md-4 col-xl-2 mb-3">
-              <div className="card glass-card h-100" style={{
-                borderTop: `3px solid ${sinalOk ? '#28a745' : '#dc3545'}`,
-                opacity: sinalOk ? 1 : 0.65,
-              }}>
-                <div className="card-body p-3">
-
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <span style={{ fontSize: '1.8rem', lineHeight: 1, filter: sinalOk ? 'none' : 'grayscale(100%)' }}>
-                      {perfil.icone}
-                    </span>
-                    <span className={`led-indicator ${sinalOk ? 'led-up' : 'led-down'}`} style={{ marginRight: 0, width: '10px', height: '10px' }}></span>
-                  </div>
-
-                  <div className="fw-bold text-white mb-1" style={{ fontSize: '0.9rem' }}>{cat}</div>
-
-                  <div className={`badge w-100 mb-3 ${sinalOk ? 'bg-success' : 'bg-danger'}`} style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>
-                    {sinalOk ? 'SINAL OK' : 'SEM SINAL'}
-                  </div>
-
-                  <div className="mb-2">
-                    <div className="text-secondary" style={{ fontSize: '0.62rem', letterSpacing: '1px' }}>VELOCIDADE MÉDIA</div>
-                    <div className={`fw-bold font-monospace ${sinalOk ? 'text-info' : 'text-secondary'}`} style={{ fontSize: '1.15rem' }}>
-                      {sinalOk ? `${velMedia} km/h` : '-- km/h'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="d-flex justify-content-between align-items-baseline">
-                      <span className="text-secondary" style={{ fontSize: '0.62rem', letterSpacing: '1px' }}>COMB./BAT. MÉDIO</span>
-                      <span className={`fw-bold font-monospace ${!sinalOk ? 'text-secondary' : energiaBaixa ? 'text-warning' : 'text-success'}`} style={{ fontSize: '0.8rem' }}>
-                        {sinalOk ? `${energia}%` : '--'}
-                      </span>
-                    </div>
-                    <div className="progress-tech">
-                      <div className="progress-tech-bar" style={{
-                        width: sinalOk ? `${energia}%` : '0%',
-                        background: energiaBaixa ? '#ffc107' : '#28a745',
-                      }}></div>
-                    </div>
-                  </div>
-
-                  <div className="text-secondary mt-2" style={{ fontSize: '0.58rem' }}>
-                    via {NOMES_LINK[idLink]}
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Gráficos */}
-      <div className="row mb-4">
-        <div className="col-12 col-lg-6 mb-3">
+        <div className="col-12 col-lg-4 mb-3">
           <div className="card glass-card h-100"><div className="card-body">
             <div className="d-flex justify-content-between align-items-center mb-2">
               <div className="small text-secondary" style={{ letterSpacing: '1px' }}>TENDÊNCIA DE DISPONIBILIDADE (%)</div>
@@ -482,7 +410,7 @@ export function MonitoramentoFrota({ infraestrutura, frota, statusLinks, toggleL
             </svg>
           </div></div>
         </div>
-        <div className="col-12 col-lg-6 mb-3">
+        <div className="col-12 col-lg-4 mb-3">
           <div className="card glass-card h-100"><div className="card-body">
             <div className="small text-secondary mb-2">DISTRIBUIÇÃO POR CATEGORIA (10.000 cada — seed Lab 6)</div>
             <div className="d-flex align-items-end gap-2" style={{ height: '80px' }}>
@@ -501,6 +429,83 @@ export function MonitoramentoFrota({ infraestrutura, frota, statusLinks, toggleL
               {CATEGORIAS.map(cat => (
                 <div key={cat} style={{ flex: 1, fontSize: '0.55rem' }} className="text-secondary text-center">{cat.slice(0, 3)}</div>
               ))}
+            </div>
+          </div></div>
+        </div>
+
+        {/* Status por Categoria — lista de 10 grupos com regra de dependência */}
+        <div className="col-12 col-lg-4 mb-3">
+          <div className="card glass-card h-100"><div className="card-body">
+            <div className="text-center text-secondary mb-3" style={{ fontSize: '0.65rem', letterSpacing: '2px' }}>
+              10 CATEGORIAS • REGRA DE DEPENDÊNCIA ATIVA
+            </div>
+            <div className="d-flex justify-content-between align-items-baseline mb-3">
+              <h6 className="m-0 fw-bold text-white" style={{ letterSpacing: '1px' }}>STATUS POR CATEGORIA</h6>
+              <span className="text-secondary" style={{ fontSize: '0.65rem' }}>10 Grupos Monitorados</span>
+            </div>
+
+            <div style={{ maxHeight: '340px', overflowY: 'auto', paddingRight: '6px' }}>
+              {CATEGORIAS.map((cat, idx) => {
+                const perfil = PERFIL_CATEGORIA[cat];
+                const idLink = linkDaCategoria(cat);
+                const sinalOk = statusLinks[idLink];
+                const velMedia = Math.max(0, (mediasPorCategoria[cat]?.velMedia || 0) + Math.round(jitter / 2));
+                const energia = Math.min(99, Math.max(5, perfil.energiaBase + jitter));
+                const energiaBaixa = energia < 30;
+
+                return (
+                  <div
+                    key={cat}
+                    className="py-3"
+                    style={{
+                      borderBottom: idx < CATEGORIAS.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none',
+                      opacity: sinalOk ? 1 : 0.6,
+                    }}
+                  >
+                    {/* Linha 1: identificação + status do sinal */}
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <div className="d-flex align-items-center gap-2">
+                        <span style={{ fontSize: '1.3rem', filter: sinalOk ? 'none' : 'grayscale(100%)' }}>{perfil.icone}</span>
+                        <span className="fw-bold text-white">{cat}</span>
+                      </div>
+                      <span
+                        className={`badge bg-transparent border ${sinalOk ? 'border-success text-success' : 'border-danger text-danger'}`}
+                        style={{ fontSize: '0.6rem', letterSpacing: '1px' }}
+                      >
+                        {sinalOk ? 'SINAL OK' : 'SEM SINAL'}
+                      </span>
+                    </div>
+
+                    {/* Linha 2: métricas de telemetria */}
+                    <div className="d-flex justify-content-between align-items-end">
+                      <div>
+                        <div className="text-secondary" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>VEL. MÉDIA</div>
+                        <div className={`font-monospace fw-bold ${sinalOk ? 'text-info' : 'text-secondary'}`} style={{ fontSize: '1.3rem', lineHeight: 1.2 }}>
+                          {sinalOk ? velMedia : '--'}
+                          <span className="text-secondary fw-normal ms-1" style={{ fontSize: '0.7rem' }}>km/h</span>
+                        </div>
+                      </div>
+                      <div className="text-end">
+                        <div className="text-secondary" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>COMB./BAT. MÉDIO</div>
+                        <div
+                          className={`font-monospace fw-bold ${!sinalOk ? 'text-secondary' : energiaBaixa ? 'text-warning' : 'text-success'}`}
+                          style={{ fontSize: '1.05rem', lineHeight: 1.4 }}
+                        >
+                          {sinalOk ? `${energia}%` : '--'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Linha 3: link do qual a categoria depende */}
+                    <div className="d-flex justify-content-between align-items-center mt-2">
+                      <span className="text-secondary" style={{ fontSize: '0.6rem' }}>Dependência</span>
+                      <span className={`font-monospace ${sinalOk ? 'text-secondary' : 'text-danger'}`} style={{ fontSize: '0.65rem' }}>
+                        Link #{idLink}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div></div>
         </div>
