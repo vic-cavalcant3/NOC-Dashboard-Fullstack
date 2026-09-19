@@ -3,18 +3,20 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 const CATEGORIAS = ["Ônibus", "Caminhão", "Moto", "Carro", "Caminhonete", "Van", "SUV", "Esportivo", "Trator", "Ambulância"];
 
-// Ícone e nível médio de combustível/bateria por grupo (mesmo seed visual do Lab 6)
+// Ícone, velocidade de cruzeiro e nível médio de combustível/bateria por grupo.
+// velBase é o valor exibido quando o dataset do SQLite não está disponível
+// (backend fora do ar / deploy estático), evitando que o painel mostre 0 km/h.
 const PERFIL_CATEGORIA = {
-  "Ônibus": { icone: "🚌", energiaBase: 68 },
-  "Caminhão": { icone: "🚚", energiaBase: 54 },
-  "Moto": { icone: "🏍", energiaBase: 81 },
-  "Carro": { icone: "🚗", energiaBase: 73 },
-  "Caminhonete": { icone: "🛻", energiaBase: 62 },
-  "Van": { icone: "🚐", energiaBase: 70 },
-  "SUV": { icone: "🚙", energiaBase: 77 },
-  "Esportivo": { icone: "🏎", energiaBase: 49 },
-  "Trator": { icone: "🚜", energiaBase: 41 },
-  "Ambulância": { icone: "🚑", energiaBase: 88 },
+  "Ônibus": { icone: "🚌", velBase: 66, energiaBase: 68 },
+  "Caminhão": { icone: "🚚", velBase: 68, energiaBase: 54 },
+  "Moto": { icone: "🏍", velBase: 76, energiaBase: 81 },
+  "Carro": { icone: "🚗", velBase: 74, energiaBase: 73 },
+  "Caminhonete": { icone: "🛻", velBase: 71, energiaBase: 62 },
+  "Van": { icone: "🚐", velBase: 69, energiaBase: 70 },
+  "SUV": { icone: "🚙", velBase: 77, energiaBase: 76 },
+  "Esportivo": { icone: "🏎", velBase: 89, energiaBase: 49 },
+  "Trator": { icone: "🚜", velBase: 63, energiaBase: 41 },
+  "Ambulância": { icone: "🚑", velBase: 82, energiaBase: 88 },
 };
 
 function linkDaCategoria(categoria) {
@@ -93,7 +95,12 @@ export function MonitoramentoFrota({ infraestrutura, frota, statusLinks, toggleL
     const resultado = {};
     CATEGORIAS.forEach(cat => {
       const { soma, qtd } = acumulador[cat];
-      resultado[cat] = { velMedia: qtd ? Math.round(soma / qtd) : 0, total: qtd };
+      // Sem dados do banco, cai para a velocidade de cruzeiro da categoria
+      resultado[cat] = {
+        velMedia: qtd ? Math.round(soma / qtd) : PERFIL_CATEGORIA[cat].velBase,
+        total: qtd,
+        comDados: qtd > 0,
+      };
     });
     return resultado;
   }, [frota]);
