@@ -1,7 +1,21 @@
 // src/components/MonitoramentoFrota.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 const CATEGORIAS = ["Ônibus", "Caminhão", "Moto", "Carro", "Caminhonete", "Van", "SUV", "Esportivo", "Trator", "Ambulância"];
+
+// Ícone e nível médio de combustível/bateria por grupo (mesmo seed visual do Lab 6)
+const PERFIL_CATEGORIA = {
+  "Ônibus": { icone: "🚌", energiaBase: 68 },
+  "Caminhão": { icone: "🚚", energiaBase: 54 },
+  "Moto": { icone: "🏍", energiaBase: 81 },
+  "Carro": { icone: "🚗", energiaBase: 73 },
+  "Caminhonete": { icone: "🛻", energiaBase: 62 },
+  "Van": { icone: "🚐", energiaBase: 70 },
+  "SUV": { icone: "🚙", energiaBase: 77 },
+  "Esportivo": { icone: "🏎", energiaBase: 49 },
+  "Trator": { icone: "🚜", energiaBase: 41 },
+  "Ambulância": { icone: "🚑", energiaBase: 88 },
+};
 
 function linkDaCategoria(categoria) {
   if (categoria === "Carro" || categoria === "Caminhonete") return 1;
@@ -65,6 +79,24 @@ export function MonitoramentoFrota({ infraestrutura, frota, statusLinks, toggleL
   const alertasFrota = veiculosSemLink + anomalias;
   const veiculosOnline = veiculosRastreados - alertasFrota;
   const percentFrota = (veiculosOnline / veiculosRastreados) * 100;
+
+  // Velocidade média real por categoria, calculada em cima do dataset vindo do SQLite
+  const mediasPorCategoria = useMemo(() => {
+    const acumulador = {};
+    CATEGORIAS.forEach(cat => { acumulador[cat] = { soma: 0, qtd: 0 }; });
+    (frota || []).forEach(v => {
+      if (acumulador[v.tipo]) {
+        acumulador[v.tipo].soma += Number(v.vel) || 0;
+        acumulador[v.tipo].qtd += 1;
+      }
+    });
+    const resultado = {};
+    CATEGORIAS.forEach(cat => {
+      const { soma, qtd } = acumulador[cat];
+      resultado[cat] = { velMedia: qtd ? Math.round(soma / qtd) : 0, total: qtd };
+    });
+    return resultado;
+  }, [frota]);
 
   // Relógio ao vivo
   useEffect(() => {
@@ -319,6 +351,78 @@ export function MonitoramentoFrota({ infraestrutura, frota, statusLinks, toggleL
                   >
                     {online ? '🚫 Simular Queda' : '🔄 Restaurar Conexão'}
                   </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Status por categoria de frota — 10 grupos */}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h5 className="m-0 text-white d-flex align-items-center" style={{ letterSpacing: '1px' }}>
+          <span style={{ display: 'inline-block', width: '4px', height: '22px', background: '#0dcaf0', marginRight: '12px', borderRadius: '2px' }}></span>
+          🚚 STATUS POR CATEGORIA DE FROTA
+        </h5>
+        <span className="text-secondary" style={{ fontSize: '0.7rem', letterSpacing: '2px' }}>10 GRUPOS • 10.000 VEÍCULOS CADA</span>
+      </div>
+
+      <div className="row mb-4">
+        {CATEGORIAS.map(cat => {
+          const perfil = PERFIL_CATEGORIA[cat];
+          const idLink = linkDaCategoria(cat);
+          const sinalOk = statusLinks[idLink];
+          const velMedia = Math.max(0, (mediasPorCategoria[cat]?.velMedia || 0) + Math.round(jitter / 2));
+          const energia = Math.min(99, Math.max(5, perfil.energiaBase + jitter));
+          const energiaBaixa = energia < 30;
+
+          return (
+            <div key={cat} className="col-6 col-md-4 col-xl-2 mb-3">
+              <div className="card glass-card h-100" style={{
+                borderTop: `3px solid ${sinalOk ? '#28a745' : '#dc3545'}`,
+                opacity: sinalOk ? 1 : 0.65,
+              }}>
+                <div className="card-body p-3">
+
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <span style={{ fontSize: '1.8rem', lineHeight: 1, filter: sinalOk ? 'none' : 'grayscale(100%)' }}>
+                      {perfil.icone}
+                    </span>
+                    <span className={`led-indicator ${sinalOk ? 'led-up' : 'led-down'}`} style={{ marginRight: 0, width: '10px', height: '10px' }}></span>
+                  </div>
+
+                  <div className="fw-bold text-white mb-1" style={{ fontSize: '0.9rem' }}>{cat}</div>
+
+                  <div className={`badge w-100 mb-3 ${sinalOk ? 'bg-success' : 'bg-danger'}`} style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>
+                    {sinalOk ? 'SINAL OK' : 'SEM SINAL'}
+                  </div>
+
+                  <div className="mb-2">
+                    <div className="text-secondary" style={{ fontSize: '0.62rem', letterSpacing: '1px' }}>VELOCIDADE MÉDIA</div>
+                    <div className={`fw-bold font-monospace ${sinalOk ? 'text-info' : 'text-secondary'}`} style={{ fontSize: '1.15rem' }}>
+                      {sinalOk ? `${velMedia} km/h` : '-- km/h'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="d-flex justify-content-between align-items-baseline">
+                      <span className="text-secondary" style={{ fontSize: '0.62rem', letterSpacing: '1px' }}>COMB./BAT. MÉDIO</span>
+                      <span className={`fw-bold font-monospace ${!sinalOk ? 'text-secondary' : energiaBaixa ? 'text-warning' : 'text-success'}`} style={{ fontSize: '0.8rem' }}>
+                        {sinalOk ? `${energia}%` : '--'}
+                      </span>
+                    </div>
+                    <div className="progress-tech">
+                      <div className="progress-tech-bar" style={{
+                        width: sinalOk ? `${energia}%` : '0%',
+                        background: energiaBaixa ? '#ffc107' : '#28a745',
+                      }}></div>
+                    </div>
+                  </div>
+
+                  <div className="text-secondary mt-2" style={{ fontSize: '0.58rem' }}>
+                    via {NOMES_LINK[idLink]}
+                  </div>
+
                 </div>
               </div>
             </div>
